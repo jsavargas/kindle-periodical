@@ -1,4 +1,4 @@
-# coding:utf-8
+# -*- coding: utf-8 -*-
 
 """
 Simple file to provide CONSTANT of templates contents to Periodical

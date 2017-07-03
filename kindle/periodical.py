@@ -1,4 +1,10 @@
-# coding:utf-8
+# -*- coding: utf-8 -*-
+
+"""
+KINDLE-PERIODICAL for Python 3
+This is a fork from vncprado/kindle-periodical for Python 2
+https://github.com/vncprado/kindle-periodical
+"""
 
 """
 This is the main file that implements kindle periodical generation
@@ -7,138 +13,145 @@ You need to put a kindlegen binary in bin folder in order to generate .mobi
 """
 
 import os
+import sys
 import glob
 import re
+import json
 import random
 import subprocess
 from datetime import datetime
-from time import strftime, localtime
+from future.utils import iteritems
+from past.builtins import basestring
 
 from templates import *
-from images import PeriodicalImages
 
 DEBUG = True
-BOOK_DIR_BASE = "temp/"
+BOOK_DIR_BASE = os.path.abspath(os.path.join(os.path.curdir, os.pardir)) + '/temp/'
 
 
 class Periodical:
     """
     Class that implements Kindle periodical file generation
     """
-    
+
     def __init__(self, data, book_directory=BOOK_DIR_BASE,
-                 user_id="test_id"):
-        self.setMeta(data)
+                 user_id='test_id'):
+        self.set_meta(data)
         self.user_id = user_id
 
         if not os.path.exists(book_directory):
             os.makedirs(book_directory)
         self.book_directory = book_directory
 
-    def setMeta(self, data):
+    def set_meta(self, data):
         self.title = data['title']
         self.creator = data['creator']
         self.publisher = data['publisher']
         self.subject = data['subject']
         self.description = data['description']
-        self.filename = data['filename']
+        self.filename = data['filename'] + '_' + datetime.today().strftime('%Y-%m-%d')
 
-    def fixEncoding(self, input):
+    def fix_encoding(self, input):
         """
         Correcting any wrong encoding
         """
-        
+
         if isinstance(input, dict):
-            return {self.fixEncoding(key):
-                    self.fixEncoding(value) for key,
-                    value in input.iteritems()}
+            return {self.fix_encoding(key):
+                    self.fix_encoding(value) for key,
+                    value in iteritems(input)}
         elif isinstance(input, list):
-            return [self.fixEncoding(element) for element in input]
-        elif isinstance(input, basestring):
-            return input.encode('ascii', 'xmlcharrefreplace')
+            return [self.fix_encoding(element) for element in input]
+        if isinstance(input, basestring):
+            return input.encode('ascii', 'xmlcharrefreplace').decode('utf-8')
         else:
             return input
 
-    def setupData(self, data):
+    def setup_data(self, data):
         """
         Create/modify description, date, title and content from items
         in subscriptions
         """
-        
-        data = self.fixEncoding(data)
+
+        data = self.fix_encoding(data)
         for subscription in data:
             for item in subscription['items']:
                 if item['published']:
-                    if not "content" in item.keys():
-                        item["content"] = u""
-
-                    item["description"] = self.getDescription(item['content'])
-                    item["date"] = datetime.fromtimestamp(
+                    if not 'content' in item.keys():
+                        item['content'] = u''
+                    else:
+                        item['content'] = item['content']
+                    item['description'] = self.get_description(item['content'])
+                    item['date'] = datetime.fromtimestamp(
                         item['published']/1000).strftime('%d/%m/%Y')
 
-                    if "title" in item.keys():
-                        item['title'] = item['title'] + " - " + item["date"]
+                    if 'title' in item.keys():
+                        item['title'] = item['title']
                     else:
-                        item["title"] = item["description"][:15]\
-                            + " - " + item["date"]
-                    item["id"] = item["id"].replace(":","-")
-                    item["id"] = item["id"].replace("_","")
-        self.data = data
-        
-        self.removeEmptySubscriptions()
+                        item['title'] = item['description'][:15]\
+                            + ' - ' + item['date']
+                    item['id'] = item['id'].replace(':', '-')
+                    item['id'] = item['id'].replace('_', '')
 
-    def setContent(self, data):
+        self.data = data
+
+        self.remove_empty_subscriptions()
+
+    def set_content(self, data):
         """
         Main function that creates all necessary files with provided data
         """
 
-        self.setupData(data)
+        self.setup_data(data)
         if DEBUG:
-            print "Setup Data OK"
+            print('Setup Data OK')
 
-        self.createArticles()
+        self.create_articles()
         if DEBUG:
-            print "Articles OK"
+            print('Articles OK')
 
-        self.createContents()
+        self.create_contents()
         if DEBUG:
-            print "Contents OK"
+            print('Contents OK')
 
-        self.createOPF()
+        self.create_opf()
         if DEBUG:
-            print "OPF OK"
+            print('OPF OK')
 
-        self.createNCX()
+        self.create_ncx()
         if DEBUG:
-            print "NCX OK"
+            print('NCX OK')
 
-        created_file = self.createMOBI()
+        created_file = self.create_mobi()
         if DEBUG and created_file:
-            print "Book", created_file, "OK!"
+            print('Book', created_file, 'OK!')
 
-        if DEBUG:
-            print "Keeping temp files!"
-        else:
-            deleted = self.deleteTempFiles()
-            if deleted:
-                print "Temp Files Removed!"
+        # if DEBUG:
+        #     print('Keeping temp files!')
+        # else:
+        #     deleted = self.delete_temp_files()
+        #     if deleted:
+        #         print('Temp Files Removed!')
+
+        if self.delete_temp_files():
+            print('Temp Files Removed!')
 
         return created_file
 
-    def createArticles(self):
+    def create_articles(self):
         """
         Use templates/article.template file to format html article
-        creating their files 
+        creating their files
         """
-        
+
         for subscription in self.data:
             for item in subscription['items']:
                 filename = self.book_directory + item['id'] + '.html'
                 if item['published']:
-                    description = item["description"]
-                    date = item["date"]
-                    title = item["title"]
-
+                    description = item['description']
+                    date = item['date']
+                    title = item['title']
+                    content = item['content']
                 # {$title} {$creator} {$description} {$title} {$content}
                 html_data = ARTICLE_STR.format(title,
                                                subscription['title'],
@@ -147,40 +160,40 @@ class Periodical:
                                                content,
                                                )
 
-                self.writeFile(filename, html_data)
+                self.write_file(filename, html_data)
 
-    def createContents(self):
+    def create_contents(self):
         """
         Use templates/contents.template file to format content.html file
         """
-        
+
         filename = self.book_directory + 'contents.html'
-        sections = ""
+        sections = ''
         for subscription in self.data:
             sections = sections + '\t<h4>' + subscription['title'] + '</h4>\n'
             sections = sections + '\t<ul>\n'
             for item in subscription['items']:
-                description = item["description"]
-                date = item["date"]
-                title = item["title"]
-                sections = sections\
-                    + '\t\t<li><a href="'\
-                    + item['id']\
-                    + '.html">'\
-                    + title\
-                    + '</a></li>\n'
-            sections = sections + '\t</ul>\n'
+                description = item['description']
+                date = item['date']
+                title = item['title']
+                sections = sections \
+                           + '\t\t<li><a href="' \
+                           + item['id'] \
+                           + '.html">' \
+                           + title \
+                           + '</a></li>\n'
+                sections = sections + '\t</ul>\n'
 
         # {$sections}
         html_data = CONTENTS_STR.format(sections)
 
-        self.writeFile(filename, html_data)
+        self.write_file(filename, html_data)
 
-    def createOPF(self):
+    def create_opf(self):
         """
-        Use templates/content_opf.template to format content.opf file 
+        Use templates/content_opf.template to format content.opf file
         """
-        
+
         filename = self.book_directory + 'content.opf'
 
         manifest = ''
@@ -188,15 +201,15 @@ class Periodical:
 
         for subscriptions in self.data:
             for item in subscriptions['items']:
-                manifest = manifest\
-                    + '\t\t<item href="'\
-                    + item['id']\
-                    + '.html" media-type="application/xhtml+xml" id="item-'\
-                    + item['id'] + '"/>\n'
-                items_ref = items_ref\
-                    + '\t\t<itemref idref="item-'\
-                    + item['id']\
-                    + '"/>\n'
+                manifest = manifest \
+                           + '\t\t<item href="' \
+                           + item['id'] \
+                           + '.html" media-type="application/xhtml+xml" id="item-' \
+                           + item['id'] + '"/>\n'
+                items_ref = items_ref \
+                            + '\t\t<itemref idref="item-' \
+                            + item['id'] \
+                            + '"/>\n'
 
         template_data = {'title': self.title,
                          'creator': self.creator,
@@ -221,37 +234,37 @@ class Periodical:
                                             template_data['items_manifest'],
                                             template_data['items_ref'])
 
-        self.writeFile(filename, html_data)
+        self.write_file(filename, html_data)
 
-    def createNCX(self):
+    def create_ncx(self):
         """
         Use templates/nav-contents_ncx.template to format nav-contents.ncx
         """
-        
-        filename = self.book_directory + "nav-contents.ncx"
+
+        filename = self.book_directory + 'nav-contents.ncx'
         sections = ''
         section_count = 0
 
         for subscription in self.data:
-            
+
             if subscription['items']:
                 section_first = subscription['items'][0]['id']
             else:
                 break
-            
-            articles = ""
+
+            articles = ''
             for item in subscription['items']:
                 # {$id} {$title} {$id} {$description} {$author}
                 article = ARTICLE_NCX_STR.format(item['id'],
-                                             item['title'],
-                                             item['id'],
-                                             self.
-                                             getDescription(item['content']),
-                                             self.creator)
-                articles = articles + article + "\n"
+                                                 item['title'],
+                                                 item['id'],
+                                                 self.
+                                                 get_description(item['content']),
+                                                 self.creator)
+                articles = articles + article + '\n'
 
             # {$section_id} {$section_title} {$section_first} {$articles}
-            section = SECTION_NCX_STR.format("section-" + str(section_count),
+            section = SECTION_NCX_STR.format('section-' + str(section_count),
                                          subscription['title'],
                                          section_first,
                                          articles)
@@ -262,14 +275,14 @@ class Periodical:
         nc_content = NAV_CONTENTS_NCX_STR.format(self.title,
                                                  self.creator,
                                                  sections)
-        
-        self.writeFile(filename, nc_content)
 
-    def createMOBI(self):
+        self.write_file(filename, nc_content)
+
+    def create_mobi(self):
         """
         Uses (not given) bin/kindlegen to create mobi file
         """
-        
+
         try:
             generate = os.path.dirname(os.path.realpath(__file__))\
                 + '/bin/kindlegen -c2 '\
@@ -278,69 +291,70 @@ class Periodical:
                 + self.filename + '.mobi'
             output = subprocess.call(generate, shell=True)
             if output > 1:
-                raise Exception("Error creating .mobi file!")
+                raise Exception('Error creating .mobi file!')
             return self.filename + '.mobi'
 
         except Exception as e:
-            print e
+            print(e)
             return None
 
-    def deleteTempFiles(self):
+    def delete_temp_files(self):
         """
         Remove temp files
         """
-        
+
         try:
             filelist = []
-            filelist = filelist + glob.glob(self.book_directory + "*.html")
-            filelist = filelist + glob.glob(self.book_directory + "*.opf")
-            filelist = filelist + glob.glob(self.book_directory + "*.ncx")
+            filelist = filelist + glob.glob(self.book_directory + '*.html')
+            filelist = filelist + glob.glob(self.book_directory + '*.opf')
+            filelist = filelist + glob.glob(self.book_directory + '*.ncx')
+            filelist = filelist + glob.glob(str(self.book_directory + 'data/') + '*.json')
 
-            print "Deleting"
+            print('Deleting')
             for f in filelist:
                 os.remove(f)
 
             return True
 
         except:
-            print "Error deleting temp files!"
+            print('Error deleting temp files!')
             return False
 
-    def writeFile(self, filename, content):
+    def write_file(self, filename, content):
         """
         Write content to filename
         """
-        
+
         file = open(filename, 'w+')
         file.write(content)
 
-    def getDescription(self, description):
+    def get_description(self, description):
         """
         Description is a reduced version of content
         """
-        
-        description = self.stripTags(description)
-        description = description.replace("\n", " ")
-        description = description.replace("  ", " ")
-        description = description.replace("        ", " ")
-        description = description.replace(">", "")
-        description = description.replace("<", "")
-        description = description[:150]
+
+        description = self.strip_tags(description)
+        description = description.replace('\n', ' ')
+        description = description.replace('  ', ' ')
+        description = description.replace('        ', ' ')
+        description = description.replace('>', '')
+        description = description.replace('<', '')
+        description = description[:500]
 
         return description
 
-    def stripTags(self, txt):
+    def strip_tags(self, txt):
         """
         Just strip tags
         """
-        
+
         return re.sub(r'<[^>]*?>', '', txt)
 
-    def removeEmptySubscriptions(self):
+    def remove_empty_subscriptions(self):
         """
         Removes any subscription with no items
         """
-        
+
         clean_data = []
         for subscription in self.data:
             if len(subscription['items']) == 0:
@@ -352,16 +366,23 @@ class Periodical:
         else:
             self.data = clean_data
 
-if __name__ == "__main__":
-    from test_content import content
+if __name__ == '__main__':
+    # For production DATA_FOLDER must be 'temp/data'
+    DATA_FOLDER = 'data-templates'
 
-    meta = {'title': "My Periodical " + datetime.today().strftime('%d/%m/%Y'),
-            'creator': "Vinicius Prado",
-            'publisher': "Vinicius Prado",
-            'subject': "Periodical",
-            'description': "Set of news articles in one .mobi file",
-            'filename': "my_news_" + datetime.today().strftime('%Y-%m-%d'),
-            }
+    try:
+        with open(DATA_FOLDER + '/metadata.json') as metadata_file:
+            metadata = json.load(metadata_file)
+    except:
+        print('Error to open metadata.json')
+        sys.exit()
 
-    periodical = Periodical(meta)
-    periodical.setContent(content)
+    try:
+        with open(DATA_FOLDER + '/content.json') as content_file:
+            content = json.load(content_file)
+    except:
+        print('Error to open content.json')
+        sys.exit()
+
+    periodical = Periodical(metadata)
+    periodical.set_content(content)

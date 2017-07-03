@@ -1,11 +1,20 @@
-Kindle Periodical
+kindle-periodical (experimental)
 =================
+This is a fork from [vncprado/kindle-periodical](https://github.com/vncprado/kindle-periodical) for Python 2.
 
-A kindle periodical utils in python for generating kindle .mobi files in periodical style.
-I was not sure if I am allowed to provide kindlegen software so you need to put a kindlegen binary in bin/ folder in order to generate .mobi
-All files are generated in temp folder.
-I use a set of templates to generated .opf, .ncx, articles and content.html files
+kindle-periodical is a util in Python 3 for generating kindle .mobi files in periodical style.
+The script require KindleGen software in 'kindle/bin' folder. KindleGen is a software develop by Amazon. For download, go to [KindleGen page](https://www.amazon.com/gp/feature.html?docId=1000765211).
+
+The folder 'kindle/templates' have a set of templates to generated .opf, .ncx, articles and content.html files, necesary for KindleGen software. You can modify them as you like.
+
+The folder 'kindle/data-templates' contains the two JSON data files of the texts and metadata that make up the .mobi periodical. For production environments these files must go in the 'kindle/temp/data' folder.
+
 
 You can run a simple test with just:
     
     $ python kindle/periodical.py
+
+####To-Do
+- Add cover image for .mobi periodical.
+- Add images for articles.
+- Testing for Windows and GNU-Linux machines.
