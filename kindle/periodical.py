@@ -20,21 +20,21 @@ import json
 import random
 import subprocess
 from datetime import datetime
-from future.utils import iteritems
-from past.builtins import basestring
 
 from templates import *
 
 DEBUG = True
-BOOK_DIR_BASE = os.path.abspath(os.path.join(os.path.curdir, os.pardir)) + '/temp/'
-
+BOOK_DIR_BASE = os.path.abspath(os.path.join(os.path.curdir))
+BOOK_DIR_TEMP = os.path.abspath(os.path.join(BOOK_DIR_BASE, os.pardir)) + '/temp/'
+# For production DATA_FOLDER must be 'temp/data'
+DATA_FOLDER = BOOK_DIR_BASE + '/data-templates/'
 
 class Periodical:
     """
     Class that implements Kindle periodical file generation
     """
 
-    def __init__(self, data, book_directory=BOOK_DIR_BASE,
+    def __init__(self, data, book_directory=BOOK_DIR_TEMP,
                  user_id='test_id'):
         self.set_meta(data)
         self.user_id = user_id
@@ -59,10 +59,10 @@ class Periodical:
         if isinstance(input, dict):
             return {self.fix_encoding(key):
                     self.fix_encoding(value) for key,
-                    value in iteritems(input)}
+                    value in input.items()}
         elif isinstance(input, list):
             return [self.fix_encoding(element) for element in input]
-        if isinstance(input, basestring):
+        if isinstance(input, str):
             return input.encode('ascii', 'xmlcharrefreplace').decode('utf-8')
         else:
             return input
@@ -77,15 +77,15 @@ class Periodical:
         for subscription in data:
             for item in subscription['items']:
                 if item['published']:
-                    if not 'content' in item.keys():
-                        item['content'] = u''
+                    if not 'content' in list(item.keys()):
+                        item['content'] = ''
                     else:
                         item['content'] = item['content']
                     item['description'] = self.get_description(item['content'])
                     item['date'] = datetime.fromtimestamp(
                         item['published']/1000).strftime('%d/%m/%Y')
 
-                    if 'title' in item.keys():
+                    if 'title' in list(item.keys()):
                         item['title'] = item['title']
                     else:
                         item['title'] = item['description'][:15]\
@@ -125,13 +125,6 @@ class Periodical:
         created_file = self.create_mobi()
         if DEBUG and created_file:
             print('Book', created_file, 'OK!')
-
-        # if DEBUG:
-        #     print('Keeping temp files!')
-        # else:
-        #     deleted = self.delete_temp_files()
-        #     if deleted:
-        #         print('Temp Files Removed!')
 
         if self.delete_temp_files():
             print('Temp Files Removed!')
@@ -182,7 +175,7 @@ class Periodical:
                            + '.html">' \
                            + title \
                            + '</a></li>\n'
-                sections = sections + '\t</ul>\n'
+            sections = sections + '\t</ul>\n'
 
         # {$sections}
         html_data = CONTENTS_STR.format(sections)
@@ -219,7 +212,7 @@ class Periodical:
                          'date': datetime.today().strftime('%Y-%m-%d'),
                          'items_manifest': manifest,
                          'items_ref': items_ref,
-                         'identifier': random.choice(range(0, 10000))
+                         'identifier': random.choice(list(range(0, 10000)))
                          }
 
         # {$identifier} {$title} {$creator} {$publisher} {$subject}
@@ -367,18 +360,15 @@ class Periodical:
             self.data = clean_data
 
 if __name__ == '__main__':
-    # For production DATA_FOLDER must be 'temp/data'
-    DATA_FOLDER = 'data-templates'
-
     try:
-        with open(DATA_FOLDER + '/metadata.json') as metadata_file:
+        with open(DATA_FOLDER + 'metadata.json') as metadata_file:
             metadata = json.load(metadata_file)
     except:
         print('Error to open metadata.json')
         sys.exit()
 
     try:
-        with open(DATA_FOLDER + '/content.json') as content_file:
+        with open(DATA_FOLDER + 'content.json') as content_file:
             content = json.load(content_file)
     except:
         print('Error to open content.json')

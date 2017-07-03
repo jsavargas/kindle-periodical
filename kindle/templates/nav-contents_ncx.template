@@ -16,10 +16,12 @@
     </docAuthor>
     <navMap>
         <navPoint class="periodical" id="periodical">
+        <mbp:meta-img src="../kindle/images/masthead.jpg" name="mastheadImage" />
             <navLabel>
                 <text>Table of Contents</text>
             </navLabel>
             <content src="contents.html" />
-{2}        </navPoint>
+            {2}
+        </navPoint>
     </navMap>
 </ncx>

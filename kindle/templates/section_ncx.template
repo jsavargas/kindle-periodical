@@ -3,4 +3,5 @@
                     <text>{1}</text>
                 </navLabel>
                 <content src="{2}.html"/>
-{3}            </navPoint>
+                {3}
+            </navPoint>
