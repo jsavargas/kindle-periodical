@@ -15,12 +15,17 @@ The folder 'kindle/images' contains two images on .jpg: a cover for kindle perio
     
     $ python kindle/periodical.py
 
-####Note:
+**Note:**
 For better results, use the old KindleGen 1.1 (search on internet): 
+
+
 ![Alt text](http://i.imgur.com/d9c2S2f.png "Periodical generated with KindleGen 1.1") 
+
 This is a periodical generated with the current (2017-07-01) KindleGen 2.9: 
+
+
 ![Alt text](http://i.imgur.com/4taStRP.png "Periodical generated with KindleGen 2.9")
 
-####TODO
+**TODO**
 - Add images for articles.
 - Testing for Windows and GNU-Linux machines.
