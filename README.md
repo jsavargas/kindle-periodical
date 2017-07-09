@@ -83,6 +83,9 @@ The script require KindleGen software in 'kindle/bin' folder. KindleGen is a sof
     
     per.set_metadata(metadata)
     per.set_content(sites_content)
+    
+    # make .mobi periodical and return the full path file
+    print(per.make_periodical())
 
 ---
 
