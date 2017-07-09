@@ -15,7 +15,7 @@ The script require KindleGen software in 'kindle/bin' folder. KindleGen is a sof
         "publisher": "Publisher Name",
         "subject": "Periodical",
         "description": "Set of news articles in one .mobi file",
-        # after make .mobi filename will be: Periodical_yyyy-mm-dd
+        # after make .mobi periodical, the filename will be: Periodical_yyyy-mm-dd
         "filename": "Periodical"
     }
     
