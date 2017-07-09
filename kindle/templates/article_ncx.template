@@ -1,8 +1,8 @@
-                <navPoint class="article" id="item-{0}">
+                <navPoint playOrder="{0}" class="article" id="item-{1}">
                     <navLabel>
-                        <text>{1}</text>
+                        <text>{2}</text>
                     </navLabel>
-                    <content src="{2}.html"/>
-                    <mbp:meta name="description">{3}</mbp:meta>
-                    <mbp:meta name="author">{4}</mbp:meta>
+                    <content src="{3}.html"/>
+                    <mbp:meta name="description">{4}</mbp:meta>
+                    <mbp:meta name="author">{5}</mbp:meta>
                 </navPoint>

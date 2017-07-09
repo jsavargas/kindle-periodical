@@ -15,13 +15,13 @@
         <text>{1}</text>
     </docAuthor>
     <navMap>
-        <navPoint class="periodical" id="periodical">
-        <mbp:meta-img src="../kindle/images/masthead.jpg" name="mastheadImage" />
+        <navPoint playOrder="0" class="periodical" id="periodical">
+        <mbp:meta-img src="{2}" name="mastheadImage" />
             <navLabel>
                 <text>Table of Contents</text>
             </navLabel>
             <content src="contents.html" />
-            {2}
+            {3}
         </navPoint>
     </navMap>
 </ncx>
