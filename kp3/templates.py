@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Simple file to provide CONSTANT of templates contents to Periodical
+Simple file to provide CONSTANT of templates contents to KindlePeriodical
 """
 
 import os

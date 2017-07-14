@@ -2,21 +2,24 @@ kindle-periodical (beta)
 =================
 This is a fork from [vncprado/kindle-periodical](https://github.com/vncprado/kindle-periodical) for Python 2.
 
-kindle-periodical is a util in Python 3 for generating kindle .mobi files in periodical style.
+kindle-periodical (kp3) is a util in Python 3 for generating kindle .mobi files in periodical style.
 The script require KindleGen software in 'kindle/bin' folder. KindleGen is a software develop by Amazon. For download, go to [KindleGen page](https://www.amazon.com/gp/feature.html?docId=1000765211).
 
 **You can run a simple test with just:**
     
-    from kindle import Periodical
+    pip install .
+---
+
+    from kp3 import Periodical
     
     metadata = {
-        "title": "Periodical Title",
+        "title": "KindlePeriodical Title",
         "creator": "Creator Name",
         "publisher": "Publisher Name",
-        "subject": "Periodical",
+        "subject": "KindlePeriodical",
         "description": "Set of news articles in one .mobi file",
         # after make .mobi periodical, the filename will be: Periodical_yyyy-mm-dd
-        "filename": "Periodical"
+        "filename": "KindlePeriodical"
     }
     
     content = [
@@ -76,10 +79,14 @@ The script require KindleGen software in 'kindle/bin' folder. KindleGen is a sof
     
     # optional, default use cover.jpg in kindle-periodiacal/kindle/images folder
     per.IMAGE_COVER = 'FULLPATH/filename.jpg'
+    
     # optional, default use masthead.jpg in kindle-periodiacal/kindle/images folder
     per.IMAGE_MASTHEAD = 'FULLPATH/filename.jpg'
-    # optional, default kindle-periodiacal/temp folder
+    
+    # optional, default /temp folder
     per.BOOK_DIR_TEMP = 'FULLPATH'
+    
+    per.KINDLEGEN_PATH = 'FULLPATH'
     
     per.set_metadata(metadata)
     per.set_content(sites_content)
@@ -93,12 +100,12 @@ The script require KindleGen software in 'kindle/bin' folder. KindleGen is a sof
 For better results, use the old KindleGen 1.1 (search on internet): 
 
 
-![Alt text](http://i.imgur.com/d9c2S2f.png "Periodical generated with KindleGen 1.1") 
+![Alt text](http://i.imgur.com/d9c2S2f.png "KindlePeriodical generated with KindleGen 1.1") 
 
 This is a periodical generated with the current (2017-07-01) KindleGen 2.9: 
 
 
-![Alt text](http://i.imgur.com/4taStRP.png "Periodical generated with KindleGen 2.9")
+![Alt text](http://i.imgur.com/4taStRP.png "KindlePeriodical generated with KindleGen 2.9")
 
 **TODO**
 - Testing for Windows and GNU-Linux machines.

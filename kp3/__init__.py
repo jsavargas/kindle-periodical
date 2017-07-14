@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-__title__ = 'kindle-periodical'
+__title__ = 'KindlePeriodical'
 __author__ = 'Andrés Molina'
 __license__ = 'GPL-V3'
 
