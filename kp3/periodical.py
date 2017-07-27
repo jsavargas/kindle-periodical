@@ -64,7 +64,8 @@ class Periodical:
     def __html_decoding(self, html):
         try:
             return json.loads(html)
-        except:
+        except Exception as e:
+            print(e)
             return html
 
     def __setup_data(self, data):
@@ -135,7 +136,8 @@ class Periodical:
                         img_file.close()
 
                         img.attrs['src'] = item_id + '/' + img_name
-                except:
+                except Exception as e:
+                    print(e)
                     html_code.img.extract()
 
             html_article = html_code.findChild('body').findChildren()
@@ -328,10 +330,9 @@ class Periodical:
             file_list = file_list + glob.glob(self.BOOK_DIR_TEMP + '*.opf')
             file_list = file_list + glob.glob(self.BOOK_DIR_TEMP + '*.ncx')
 
-            with os.scandir(self.BOOK_DIR_TEMP) as dir:
-                for entry in dir:
-                    if not entry.is_file():
-                        folder_list.append(entry.name)
+            for entry in os.scandir(self.BOOK_DIR_TEMP):
+                if not entry.is_file():
+                    folder_list.append(entry.name)
 
             print('\nDeleting')
             for f in file_list:
@@ -340,8 +341,8 @@ class Periodical:
                 shutil.rmtree(self.BOOK_DIR_TEMP + d)
 
             return True
-
-        except:
+        except Exception as e:
+            print(e)
             print('Error deleting temp files!')
             return False
 
