@@ -45,6 +45,13 @@ class Periodical:
         self.__description = data['description']
         self.__filename = data['filename'] + '_' + datetime.today().strftime('%Y-%m-%d')
 
+    def __make_folder(self, folder):
+        """
+        If temp folder not exist, will make one
+        """
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
     def __fix_encoding(self, input):
         """
         Correcting any wrong encoding
@@ -351,7 +358,7 @@ class Periodical:
         Write content to filename
         """
 
-        file = open(filename, 'w+')
+        file = open(filename, 'w+', encoding='utf-8')
         file.write(content)
 
     def __get_description(self, description):
@@ -400,6 +407,8 @@ class Periodical:
         Main function that creates all necessary files with provided data
         """
         print('\n')
+
+        self.__make_folder(self.BOOK_DIR_TEMP)
 
         self.__setup_data(data)
         print('Setup Data OK')
