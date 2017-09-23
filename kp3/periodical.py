@@ -93,12 +93,12 @@ class Periodical:
                     item['description'] = self.__get_description(item['content'])
 
                     item['date'] = datetime.fromtimestamp(
-                        item['published'] / 1000).strftime('%d/%m/%Y')
+                        item['published'] / 1000).strftime('%Y-%m-%d')
 
                     if 'title' in list(item.keys()):
                         item['title'] = item['title']
                     else:
-                        item['title'] = item['description'][:15]\
+                        item['title'] = item['description'][:30]\
                             + ' - ' + item['date']
 
                     if not 'author' in list(item.keys()):
@@ -163,13 +163,15 @@ class Periodical:
             for item in subscription['items']:
                 filename = self.BOOK_DIR_TEMP + item['id'] + '.html'
                 if item['published']:
+                    author = item['author']
                     description = item['description']
                     date = item['date']
                     title = item['title']
                     content = self.__content_with_images(item['id'], item['content'])
-                # {$title} {$creator} {$description} {$title} {$content}
+                # {$title} {$author} {$date} {$description} {$title} {$content}
                 html_data = ARTICLE_STR.format(title,
-                                               subscription['title'],
+                                               author,
+                                               date,
                                                description,
                                                title,
                                                content,
@@ -341,7 +343,7 @@ class Periodical:
                 if not entry.is_file():
                     folder_list.append(entry.name)
 
-            print('\nDeleting')
+            print('\nDeleting...')
             for f in file_list:
                 os.remove(f)
             for d in folder_list:
@@ -372,7 +374,7 @@ class Periodical:
         description = description.replace('        ', ' ')
         description = description.replace('>', '')
         description = description.replace('<', '')
-        description = description[:600]
+        description = description[:650]
 
         if description == '':
             description = ' '
@@ -431,7 +433,7 @@ class Periodical:
 
         deleted = self.__delete_temp_files()
         if deleted:
-            print("Temp Files Removed!\n")
+            print("Temp files removed!\n")
 
         return created_file
 

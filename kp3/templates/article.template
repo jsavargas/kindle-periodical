@@ -4,14 +4,18 @@
         <meta content="http://www.w3.org/1999/xhtml; charset=utf-8" http-equiv="Content-Type"/>
         <title>{0}</title>
         <meta content="{1}" name="author" />
-        <meta content="{2}" name="description" />
+        <meta content="{3}" name="description" />
     </head>
     <body>
         <a name="main"></a>
         <br/>
-        <h1>{3}</h1>
+        <h1>{4}</h1>
+        <span>
+            <span style="color: #5e5e5e;">{1}</span> • <span style="color: #bebebe">{2}</span>
+        </span>
         <br/>
-        {4}
+        <br/>
+        {5}
         <br/>
 
         <!-- Following <br/> tags are used in order to fix a small bug in
