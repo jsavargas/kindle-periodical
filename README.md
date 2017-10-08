@@ -9,7 +9,8 @@ The script require KindleGen software in 'kindle/bin' folder. KindleGen is a sof
     
     pip install .
 ---
-
+    # For HTML content use json.dumps() method.
+    import json
     from kp3 import Periodical
     
     metadata = {
@@ -27,23 +28,23 @@ The script require KindleGen software in 'kindle/bin' folder. KindleGen is a sof
             "title": "Subscription title 1",
             "items": [
                 {
-                    # optional
+                    # Optional.
                     "author": "Author Name",
-                    # timestamp
-                    "published": 1425314310227,
-                    # for HTML, use json.dumps() encoding
+                    # Unix timestamp.
+                    "published": 1507343103,
+                    # For HTML, use json.dumps() encoding.
                     "content": "<b>Insert HTML here.</b>",
                     "title": "Content Title 1"
                 },
                 {
                     "author": "Author Name",
-                    "published": 1425314310227,
+                    "published": 1507343103,
                     "content": "<b>Insert HTML here.</b>",
                     "title": "Content Title 2"
                 },
                 {
                     "author": "Author Name",
-                    "published": 1425314310227,
+                    "published": 1507343103,
                     "content": "<b>Insert HTML here.</b>",
                     "title": "Content Title 3"
                 }
@@ -55,19 +56,19 @@ The script require KindleGen software in 'kindle/bin' folder. KindleGen is a sof
             "items": [
                 {
                     "author": "Author Name",
-                    "published": 1425340100784,
+                    "published": 1507343103,
                     "content": "<b>Insert HTML here.</b>",
                     "title": "Another content title 1"
                 },
                 {
                     "author": "Author Name",
-                    "published": 1425340100784,
+                    "published": 1507343103,
                     "content": "<b>Insert HTML here.</b>",
                     "title": "Another content title 2"
                 },
                 {
                     "author": "Author Name",
-                    "published": 1425340100784,
+                    "published": 1507343103,
                     "content": "<b>Insert HTML here.</b>",
                     "title": "Another content title 3"
                 }
@@ -77,15 +78,16 @@ The script require KindleGen software in 'kindle/bin' folder. KindleGen is a sof
     
     per = Periodical()
     
-    # optional, default use cover.jpg in kindle-periodiacal/kindle/images folder
+    # Optional, default use cover.jpg in kindle-periodiacal/kindle/images folder
     per.IMAGE_COVER = 'FULLPATH/filename.jpg'
     
-    # optional, default use masthead.jpg in kindle-periodiacal/kindle/images folder
+    # Optional, default use masthead.jpg in kindle-periodiacal/kindle/images folder
     per.IMAGE_MASTHEAD = 'FULLPATH/filename.jpg'
     
-    # optional, default /temp folder
+    # Optional, default ~/temp folder
     per.BOOK_DIR_TEMP = 'FULLPATH'
     
+    # Example: /bin
     per.KINDLEGEN_PATH = 'FULLPATH'
     
     per.set_metadata(metadata)

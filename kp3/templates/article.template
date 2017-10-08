@@ -11,7 +11,7 @@
         <br/>
         <h1>{4}</h1>
         <span>
-            <span style="color: #5e5e5e;">{1}</span> • <span style="color: #bebebe">{2}</span>
+            <span style="color: #5e5e5e;">{1}</span> <span style="color: #bebebe; font-style: italic;">{2}</span>
         </span>
         <br/>
         <br/>

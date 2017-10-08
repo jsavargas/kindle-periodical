@@ -1,4 +1,6 @@
-# -*- coding: utf-8 -*-
+# KINDLE-PERIODICAL for Python 3
+# This is a fork from vncprado/kindle-periodical for Python 2.
+# https://github.com/vncprado/kindle-periodical
 
 import os
 import glob
@@ -14,24 +16,9 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 from .templates import *
 
-"""
-KINDLE-PERIODICAL for Python 3
-This is a fork from vncprado/kindle-periodical for Python 2
-https://github.com/vncprado/kindle-periodical
-"""
 
-"""
-This is the main file that implements kindle periodical generation
-All files are generated in temp folder
-You need to put a kindlegen binary in bin folder in order to generate .mobi
-"""
-
-
+# Class that implements Kindle periodical file generation.
 class Periodical:
-    """
-    Class that implements Kindle periodical file generation
-    """
-
     IMAGE_COVER = os.path.dirname(os.path.realpath(__file__)) + '/images/cover.jpg'
     IMAGE_MASTHEAD = os.path.dirname(os.path.realpath(__file__)) + '/images/masthead.jpg'
     BOOK_DIR_TEMP = os.path.dirname(os.path.realpath(__file__)) + '~/temp'
@@ -45,18 +32,15 @@ class Periodical:
         self.__description = data['description']
         self.__filename = data['filename'] + '_' + datetime.today().strftime('%Y-%m-%d')
 
+    # If temp folder not exist, will make one.
+    # folder - string - Path folder for make a folder on file system.
     def __make_folder(self, folder):
-        """
-        If temp folder not exist, will make one
-        """
         if not os.path.exists(folder):
             os.makedirs(folder)
 
+    # Correcting any wrong encoding
+    # input - string - Word for encoding check.
     def __fix_encoding(self, input):
-        """
-        Correcting any wrong encoding
-        """
-
         if isinstance(input, dict):
             return {self.__fix_encoding(key):
                     self.__fix_encoding(value) for key,
@@ -68,6 +52,8 @@ class Periodical:
         else:
             return input
 
+    # Decoding HTML.
+    # html - string - HTML data.
     def __html_decoding(self, html):
         try:
             return json.loads(html)
@@ -75,116 +61,125 @@ class Periodical:
             print(e)
             return html
 
+    # Create/modify description, date, title and content from items in subscriptions.
+    # data - list - List with subscriptions data.
     def __setup_data(self, data):
-        """
-        Create/modify description, date, title and content from items
-        in subscriptions
-        """
-
         data = self.__fix_encoding(data)
         for subscription in data:
+            new_subscription = []
             for item in subscription['items']:
-                if item['published']:
-                    if not 'content' in list(item.keys()):
-                        item['content'] = ' '
-                    else:
-                        item['content'] = self.__html_decoding(item['content'])
+                if 'content' not in list(item.keys()):
+                    del item
+                    continue
+                else:
+                    item['content'] = self.__html_decoding(item['content'])
 
-                    item['description'] = self.__get_description(item['content'])
+                item['description'] = self.__get_description(item['content'])
 
-                    item['date'] = datetime.fromtimestamp(
-                        item['published'] / 1000).strftime('%Y-%m-%d')
+                if 'published' in list(item.keys()) and isinstance(item['published'], int):
+                    item['date'] = datetime.fromtimestamp(item['published']).strftime('%Y-%m-%d')
+                else:
+                    item['date'] = datetime.today().strftime('%Y-%m-%d')
 
-                    if 'title' in list(item.keys()):
-                        item['title'] = item['title']
-                    else:
-                        item['title'] = item['description'][:30]\
-                            + ' - ' + item['date']
+                if 'title' in list(item.keys()) and not isinstance(item['title'], str):
+                    del item
+                    continue
+                elif len(item['title']) == 0:
+                    item['title'] = self.__get_description(item['content'])[:35]
+                else:
+                    item['title'] = item['title']
 
-                    if not 'author' in list(item.keys()):
-                        item['author'] = ' '
+                if 'author' not in list(item.keys()) or not isinstance(item['author'], str) or len(item['author']) == 0:
+                    item['author'] = ' '
 
-                    if item['author'] == '':
-                        item['author'] = ' '
+                # Assign a unique ID for files generation on temp folder.
+                item['id'] = str(uuid.uuid4())
 
-                    item['id'] = str(uuid.uuid4())
+                new_subscription.append(item)
+            subscription['items'] = new_subscription
 
+            # Assign a unique ID for files generation on temp folder.
             subscription['id'] = str(uuid.uuid4())
 
         self.__data = data
 
         self.__remove_empty_subscriptions()
 
-    def __content_with_images(self, item_id, html_content):
-        html_code = BeautifulSoup(html_content)
+    # Download and store images from articles.
+    # item_id - string - Unique article ID.
+    # html_content - string -  HTML data.
+    def __articles_images(self, item_id, html_content):
+        html_code = BeautifulSoup(html_content, 'lxml')
         images_list = html_code.find_all('img')
 
+        # If images exists.
         if len(images_list) > 0:
             img_count = 0
-            if not os.path.exists(self.BOOK_DIR_TEMP + item_id):
-                os.makedirs(self.BOOK_DIR_TEMP + item_id)
+            # If temp folder not exists, will create.
+            if not os.path.exists(self.BOOK_DIR_TEMP + '/'+ item_id):
+                os.makedirs(self.BOOK_DIR_TEMP + '/' + item_id)
 
             for img in images_list:
                 img_count += 1
 
                 try:
+                    # Download image from <img> URL HTML tag.
                     response = urllib.request.urlopen(img.attrs['src'])
                     img_data = response.read()
-
+                    # Check image type.
                     img_type = imghdr.what('', h=img_data)
 
+                    # If not image, remove <img> tag from HTML code.
                     if isinstance(img_type, type(None)):
                         html_code.img.extract()
                     else:
+                        # Store image in temp folder.
                         img_name = "image_{0}.{1}".format(img_count, img_type)
-                        img_full_name = self.BOOK_DIR_TEMP + item_id + '/' + img_name
+                        img_full_name = self.BOOK_DIR_TEMP + '/' + item_id + '/' + img_name
                         img_file = open(img_full_name, "wb+")
                         img_file.write(img_data)
                         img_file.close()
 
+                        # Sets a new <img> tag source from downloaded image.
                         img.attrs['src'] = item_id + '/' + img_name
                 except Exception as e:
                     print(e)
+                    # Remove <img> tag from HTML code.
                     html_code.img.extract()
 
+            # Extract <body> tag from HTML code.
             html_article = html_code.findChild('body').findChildren()
 
             return html_article[0]
         else:
             return html_content
 
+    # Create HTML code for a article.
+    # Use templates/article.template file to format html article creating their files.
     def __create_articles(self):
-        """
-        Use templates/article.template file to format html article
-        creating their files
-        """
-
-        for subscription in self.__data:
+       for subscription in self.__data:
             for item in subscription['items']:
-                filename = self.BOOK_DIR_TEMP + item['id'] + '.html'
+                filename = self.BOOK_DIR_TEMP + '/' + item['id'] + '.html'
                 if item['published']:
                     author = item['author']
                     description = item['description']
                     date = item['date']
                     title = item['title']
-                    content = self.__content_with_images(item['id'], item['content'])
+                    content = self.__articles_images(item['id'], item['content'])
+
                 # {$title} {$author} {$date} {$description} {$title} {$content}
                 html_data = ARTICLE_STR.format(title,
                                                author,
                                                date,
                                                description,
                                                title,
-                                               content,
-                                               )
+                                               content)
 
                 self.__write_file(filename, html_data)
 
+    # Use templates/contents.template file to format content.html file.
     def __create_contents(self):
-        """
-        Use templates/contents.template file to format content.html file
-        """
-
-        filename = self.BOOK_DIR_TEMP + 'contents.html'
+        filename = self.BOOK_DIR_TEMP + '/contents.html'
         sections = ''
         for subscription in self.__data:
             sections = sections + '\t<h4>' + subscription['title'] + '</h4>\n'
@@ -206,15 +201,11 @@ class Periodical:
 
         self.__write_file(filename, html_data)
 
+    # Use templates/content_opf.template to format content.opf file
     def __create_opf(self):
-        """
-        Use templates/content_opf.template to format content.opf file
-        """
-
-        filename = self.BOOK_DIR_TEMP + 'content.opf'
-
         manifest = ''
         items_ref = ''
+        filename = self.BOOK_DIR_TEMP + '/content.opf'
 
         for subscriptions in self.__data:
             for item in subscriptions['items']:
@@ -237,8 +228,7 @@ class Periodical:
                          'cover': self.IMAGE_COVER,
                          'items_manifest': manifest,
                          'items_ref': items_ref,
-                         'identifier': random.choice(list(range(0, 10000)))
-                         }
+                         'identifier': random.choice(list(range(0, 10000)))}
 
         # {$identifier} {$title} {$creator} {$publisher} {$subject}
         # {$description} {$date} {$items_manifest} {$items_ref}
@@ -255,18 +245,14 @@ class Periodical:
 
         self.__write_file(filename, html_data)
 
+    # Use templates/nav-contents_ncx.template to format nav-contents.ncx
     def __create_ncx(self):
-        """
-        Use templates/nav-contents_ncx.template to format nav-contents.ncx
-        """
-
-        filename = self.BOOK_DIR_TEMP + 'nav-contents.ncx'
         sections = ''
         section_count = 0
         play_order_count = 1
+        filename = self.BOOK_DIR_TEMP + '/nav-contents.ncx'
 
         for subscription in self.__data:
-
             if subscription['items']:
                 section_first = subscription['items'][0]['id']
             else:
@@ -277,6 +263,7 @@ class Periodical:
 
             for item in subscription['items']:
                 play_order_count += 1
+
                 # {$id} {$title} {$id} {$description} {$author}
                 article = ARTICLE_NCX_STR.format(play_order_count,
                                                  item['id'],
@@ -284,10 +271,10 @@ class Periodical:
                                                  item['id'],
                                                  self.__get_description(item['content']),
                                                  item['author'])
-
                 articles = articles + article + '\n'
 
             play_order_count += 1
+
             # {$section_id} {$section_title} {$section_first} {$articles}
             section = SECTION_NCX_STR.format(play_order_temp,
                                              'section-' + str(section_count),
@@ -306,93 +293,83 @@ class Periodical:
 
         self.__write_file(filename, nc_content)
 
+    # Uses (not given) bin/kindlegen to create mobi file.
     def __create_mobi(self):
-        """
-        Uses (not given) bin/kindlegen to create mobi file
-        """
-
         try:
             generate = self.KINDLEGEN_PATH\
                 + '/kindlegen -c2 '\
                 + self.BOOK_DIR_TEMP\
-                + 'content.opf -o '\
+                + '/content.opf -o '\
                 + self.__filename + '.mobi'
             output = subprocess.call(generate, shell=True)
+
+            # Raise a exception if has produced a error generating *.mobi file.
             if output > 1:
                 raise Exception('Error creating .mobi file!')
-            return self.BOOK_DIR_TEMP + self.__filename + '.mobi'
+
+            return self.BOOK_DIR_TEMP + '/' + self.__filename + '.mobi'
 
         except Exception as e:
             print(e)
             return None
 
+    # Remove temp files.
     def __delete_temp_files(self):
-        """
-        Remove temp files
-        """
-
         try:
             file_list = []
             folder_list = []
-
-            file_list = file_list + glob.glob(self.BOOK_DIR_TEMP + '*.html')
-            file_list = file_list + glob.glob(self.BOOK_DIR_TEMP + '*.opf')
-            file_list = file_list + glob.glob(self.BOOK_DIR_TEMP + '*.ncx')
+            file_list = file_list + glob.glob(self.BOOK_DIR_TEMP + '/' + '*.html')
+            file_list = file_list + glob.glob(self.BOOK_DIR_TEMP + '/' + '*.opf')
+            file_list = file_list + glob.glob(self.BOOK_DIR_TEMP + '/' + '*.ncx')
 
             for entry in os.scandir(self.BOOK_DIR_TEMP):
                 if not entry.is_file():
                     folder_list.append(entry.name)
 
             print('\nDeleting...')
+
             for f in file_list:
                 os.remove(f)
             for d in folder_list:
-                shutil.rmtree(self.BOOK_DIR_TEMP + d)
+                shutil.rmtree(self.BOOK_DIR_TEMP + '/' + d)
 
             return True
+
         except Exception as e:
             print(e)
             print('Error deleting temp files!')
             return False
 
+    # Write content to filename.
+    # filename - string - Filename to write.
+    # content - string - Content to write.
     def __write_file(self, filename, content):
-        """
-        Write content to filename
-        """
-
         file = open(filename, 'w+', encoding='utf-8')
         file.write(content)
 
-    def __get_description(self, description):
-        """
-        Description is a reduced version of content
-        """
+    # Get description text from article, is a reduced version of content.
+    # text - string - Text to extract a description.
+    def __get_description(self, text):
+        text = self.__strip_tags(text)
+        text = text.replace('\n', ' ')
+        text = text.replace('  ', ' ')
+        text = text.replace('        ', ' ')
+        text = text.replace('>', '')
+        text = text.replace('<', '')
+        text = text[:650]
 
-        description = self.__strip_tags(description)
-        description = description.replace('\n', ' ')
-        description = description.replace('  ', ' ')
-        description = description.replace('        ', ' ')
-        description = description.replace('>', '')
-        description = description.replace('<', '')
-        description = description[:650]
+        if text == '':
+            text = ' '
 
-        if description == '':
-            description = ' '
+        return text
 
-        return description
+    # Just strip tags.
+    # text - string - Text to strip.
+    def __strip_tags(self, text):
+        return re.sub(r'<[^>]*?>', '', text)
 
-    def __strip_tags(self, txt):
-        """
-        Just strip tags
-        """
-
-        return re.sub(r'<[^>]*?>', '', txt)
-
+    # Removes any subscription with no items.
     def __remove_empty_subscriptions(self):
-        """
-        Removes any subscription with no items
-        """
-
         clean_data = []
         for subscription in self.__data:
             if len(subscription['items']) == 0:
@@ -404,29 +381,22 @@ class Periodical:
         else:
             self.__data = clean_data
 
+    # Function that creates all necessary files with provided data.
     def set_content(self, data):
-        """
-        Main function that creates all necessary files with provided data
-        """
         print('\n')
-
         self.__make_folder(self.BOOK_DIR_TEMP)
-
         self.__setup_data(data)
         print('Setup Data OK')
-
         self.__create_articles()
         print('Articles OK')
-
         self.__create_contents()
         print('Contents OK')
-
         self.__create_opf()
         print('OPF OK')
-
         self.__create_ncx()
         print('NCX OK')
 
+    # Main function for create kindle periodical.
     def make_periodical(self):
         created_file = self.__create_mobi()
         print('\nBook', created_file, 'OK!')
@@ -435,5 +405,6 @@ class Periodical:
         if deleted:
             print("Temp files removed!\n")
 
+        # Return full path for *.mobi file created.
         return created_file
 
