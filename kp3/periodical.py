@@ -123,6 +123,9 @@ class Periodical:
                 img_count += 1
 
                 try:
+                    # Only for URL without 'http:'
+                    if str(img.attrs['src'])[:2] == '//':
+                        img.attrs['src'] = 'http:' + img.attrs['src']
                     # Download image from <img> URL HTML tag.
                     response = urllib.request.urlopen(img.attrs['src'])
                     img_data = response.read()

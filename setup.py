@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='kp3',
-      version='0.3',
+      version='0.4',
       description='A kindle periodical util writen in python 3 for generating kindle .mobi files in periodical style.',
       url='https://github.com/andresmlna/kindle-periodical',
       author='Andrés Molina',
