@@ -14,8 +14,11 @@ import subprocess
 import urllib.request
 from datetime import datetime
 from bs4 import BeautifulSoup
-from .templates import *
+from templates import *
 
+import pdb
+#pdb.set_trace()
+                
 
 # Class that implements Kindle periodical file generation.
 class Periodical:
@@ -109,7 +112,11 @@ class Periodical:
     # item_id - string - Unique article ID.
     # html_content - string -  HTML data.
     def __articles_images(self, item_id, html_content):
-        html_code = BeautifulSoup(html_content, 'lxml')
+
+        #pdb.set_trace()
+        #return html_content
+
+        html_code = BeautifulSoup(html_content)
         images_list = html_code.find_all('img')
 
         # If images exists.
@@ -151,8 +158,11 @@ class Periodical:
                     html_code.img.extract()
 
             # Extract <body> tag from HTML code.
-            html_article = html_code.findChild('body').findChildren()
-
+            try:
+                html_article = html_code.findChild('body').findChildren()
+            except Exception as e:
+                return html_content
+            
             return html_article[0]
         else:
             return html_content
@@ -162,6 +172,9 @@ class Periodical:
     def __create_articles(self):
        for subscription in self.__data:
             for item in subscription['items']:
+                #import pdb
+                #pdb.set_trace()
+                
                 filename = self.BOOK_DIR_TEMP + '/' + item['id'] + '.html'
                 if item['published']:
                     author = item['author']
@@ -389,7 +402,6 @@ class Periodical:
         print('\n')
         self.__make_folder(self.BOOK_DIR_TEMP)
         self.__setup_data(data)
-        print('Setup Data OK')
         self.__create_articles()
         print('Articles OK')
         self.__create_contents()

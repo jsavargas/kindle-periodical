@@ -9,6 +9,6 @@ setup(name='kp3',
       license='GPL-V3',
       packages=['kp3'],
       package_data={'kp3': ['images/*', 'templates/*']},
-      install_requires=['beautifulsoup4'],
+      install_requires=['beautifulsoup4','feedparser'],
       zip_safe=False
       )
